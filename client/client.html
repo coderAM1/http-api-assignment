@@ -2,24 +2,61 @@
 <html lang="en">
 <head>
   <title>Our simple HTTP server</title>
-  <link rel="stylesheet" type="text/css" href="/style.css">
-  
+  <link rel="stylesheet" type="text/css" href="http://localhost:3000/style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
   <script type="text/babel">
+    const handleResponse = (xhr, type) => {
+      const pageSel = document.querySelector("#page");
+      if(type == "text/xml"){
+        let parser = new DOMParser();
+        let xmlDoc = parser.parseFromString(xhr.responseText,"text/xml");
+        document.querySelector("#content").innerHTML ="<h1>" + pageSel.options[pageSel.selectedIndex].innerHTML +"</h1><p>" +xmlDoc.getElementsByTagName("message")[0].childNodes[0].nodeValue +"</p>";
+      }
+      else{
+        try{
+				  let json = JSON.parse(xhr.responseText);
+				  if( !json.message){
+            document.querySelector("#content").innerHTML = "There was a problem with it working";
+				  }else{
+
+					  document.querySelector("#content").innerHTML = "<h1>" + pageSel.options[pageSel.selectedIndex].innerHTML +"</h1><p>" + json.message +"</p>";
+				  }
+			  }catch(error){
+				  console.log(`errer`);
+			  }
+      }
+    };
+    const sendAjax = (url,type) => {
+      const xhr = new XMLHttpRequest();
+      xhr.onload = () => handleResponse(xhr,type);
+      xhr.open('GET', url);
+      xhr.setRequestHeader("Accept", type);
+      xhr.send();
+    };
+    const init = () => {
+      const buttonSend = document.querySelector("#send");
+      const pageSel = document.querySelector("#page");
+      const typeSel = document.querySelector("#type");
+      //const url = "http://localhost:3000";
+      const url = window.location.href;
+      buttonSend.onclick = () => sendAjax(url+pageSel.options[pageSel.selectedIndex].value,typeSel.options[typeSel.selectedIndex].value);
+    };
+    window.onload = init;
+
 
   </script>
 </head>
 <body>
   <section id="top">
-    <h3>Status Code Tests</h3>
+    <h1>Status Code Tests</h1>
     <select id="page">
-      <option value="/success">Success</option>
-      <option value="/badRequest">Bad Request</option>
-      <option value="/unauthorized">Unauthorized</option>
-      <option value="/forbidden">Forbidden</option>
-      <option value="/internal">Internal</option>
-      <option value="/notImplemented">Not Implemented</option>
-      <option value="/notFound">Not Found</option>
+      <option value="success">Success</option>
+      <option value="badRequest">Bad Request</option>
+      <option value="unauthorized">Unauthorized</option>
+      <option value="forbidden">Forbidden</option>
+      <option value="internal">Internal</option>
+      <option value="notImplemented">Not Implemented</option>
+      <option value="notFound">Not Found</option>
     </select>
     <select id="type">
       <option value="application/json">JSON</option>
